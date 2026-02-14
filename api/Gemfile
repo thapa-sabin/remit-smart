@@ -64,3 +64,9 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
 end
+
+gem "redis"
+gem "sidekiq"
+gem "sidekiq-cron"
+gem "httparty"
+gem "dotenv-rails"
