@@ -1,0 +1,9 @@
+/api/log/*
+/api/tmp/*
+/api/vendor/bundle
+/models/*
+*.pyc
+__pycache__/
+pgdata/
+.env
+.idea/
