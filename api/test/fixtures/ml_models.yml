@@ -1,0 +1,21 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  version: MyString
+  framework: MyString
+  artifact_path: MyString
+  scaler_path: MyString
+  trained_until: 2026-02-15
+  window_size: 1
+  horizons: 1
+  metrics: 
+
+two:
+  version: MyString
+  framework: MyString
+  artifact_path: MyString
+  scaler_path: MyString
+  trained_until: 2026-02-15
+  window_size: 1
+  horizons: 1
+  metrics: 

@@ -1,0 +1,23 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  currency: one
+  model_version: MyString
+  target: MyString
+  horizon: 1
+  prediction_date: 2026-02-15
+  predicted_for: 2026-02-15
+  yhat: 9.99
+  yhat_lower: 9.99
+  yhat_upper: 9.99
+
+two:
+  currency: two
+  model_version: MyString
+  target: MyString
+  horizon: 1
+  prediction_date: 2026-02-15
+  predicted_for: 2026-02-15
+  yhat: 9.99
+  yhat_lower: 9.99
+  yhat_upper: 9.99
