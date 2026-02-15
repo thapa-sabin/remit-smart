@@ -1,5 +1,4 @@
 
-version: "3.9"
 services:
   db:
     image: postgres:17
@@ -9,42 +8,48 @@ services:
       POSTGRES_DB: forex
     volumes:
       - pgdata:/var/lib/postgresql/data
-    ports: ["5432:5432"]
 
   redis:
     image: redis:7
-    ports: ["6379:6379"]
 
-  rails:
-    build: ./rails
+  api:
+    build: ./api
     env_file: .env
     environment:
-      DATABASE_URL: postgres://app:secret@db:5432/forex
+      DATABASE_URL: postgres://app:${POSTGRES_PASSWORD}@db:5432/forex
       REDIS_URL: redis://redis:6379/0
       ML_BASE_URL: http://ml:8000
       RAILS_ENV: development
-    depends_on: [db, redis, ml]
-    ports: ["3000:3000"]
-    command: bash -lc "bundle exec rails db:migrate && bundle exec rails s -b 0.0.0.0 -p 3000"
+    depends_on:
+      - db
+      - redis
+      - ml
+    ports:
+      - "3000:3000"
+    command: >
+      bash -lc "bundle exec rails db:prepare &&
+                bundle exec rails s -b 0.0.0.0 -p 3000"
 
   worker:
-    build: ./rails
+    build: ./api
     env_file: .env
     environment:
-      DATABASE_URL: postgres://app:secret@db:5432/forex
+      DATABASE_URL: postgres://app:${POSTGRES_PASSWORD}@db:5432/forex
       REDIS_URL: redis://redis:6379/0
       ML_BASE_URL: http://ml:8000
       RAILS_ENV: development
-    depends_on: [db, redis, ml]
+    depends_on:
+      - db
+      - redis
+      - ml
     command: bash -lc "bundle exec sidekiq"
 
   ml:
     build: ./ml_service
     volumes:
       - ./models:/models
-    ports: ["8000:8000"]
+    ports:
+      - "8000:8000"
 
 volumes:
   pgdata:
-``
-

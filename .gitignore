@@ -10,3 +10,4 @@ pgdata/
 
 # Rails secrets
 /api/config/master.key
+/api/config/*.bak.*
