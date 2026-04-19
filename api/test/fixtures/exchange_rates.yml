@@ -1,0 +1,25 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  currency: one
+  date: 2026-02-15
+  published_on: 2026-02-15 05:29:43
+  modified_on: 2026-02-15 05:29:43
+  buy_raw: 9.99
+  sell_raw: 9.99
+  buy: 9.99
+  sell: 9.99
+  mid: 9.99
+  source: MyString
+
+two:
+  currency: two
+  date: 2026-02-15
+  published_on: 2026-02-15 05:29:43
+  modified_on: 2026-02-15 05:29:43
+  buy_raw: 9.99
+  sell_raw: 9.99
+  buy: 9.99
+  sell: 9.99
+  mid: 9.99
+  source: MyString

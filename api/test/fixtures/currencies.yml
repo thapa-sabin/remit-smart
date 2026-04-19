@@ -1,0 +1,11 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  iso3: MyString
+  name: MyString
+  unit: 1
+
+two:
+  iso3: MyString
+  name: MyString
+  unit: 1
