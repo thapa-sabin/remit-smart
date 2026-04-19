@@ -1,0 +1,28 @@
+/api/log/*
+/api/storage/*
+/api/tmp/*
+/api/vendor/bundle
+/models/*
+*.pyc
+__pycache__/
+pgdata/
+.env
+.env.*
+.idea/
+
+# Rails secrets
+/api/config/master.key
+/api/config/*.bak.*
+
+# ML artifacts
+models/*
+!models/.keep
+
+# Python caches
+/ml_service/__pycache__/
+ml_service/*.pyc
+
+# Virtual environments
+.ml_model/
+venv/
+.venv/
