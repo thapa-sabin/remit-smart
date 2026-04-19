@@ -1,0 +1,2 @@
+class MlModel < ApplicationRecord
+end
