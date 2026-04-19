@@ -1,0 +1,27 @@
+services:
+  db:
+  image: postgres:17
+  environment:
+    POSTGRES_PASSWORD: password
+  volumes:
+    - postgres_data:/var/lib/postgresql/data
+
+  rails-bff:
+  build: ./rails-bff/
+  command: bin/rails -s '0.0.0.0'
+  volumes:
+    - ./rails-bff:/app
+  ports:
+    - "3000:3000"
+  depends_on:
+    - db
+  environment:
+    DATABASE_URL: postgres://postgres:password@db:5432/remit_smart_development
+
+  fastapi-ml:
+    build: ./fastapi-ml
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    volumes:
+      - ./fastapi-ml:/app
+    ports:
+      - "8000:8000"
