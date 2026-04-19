@@ -1,0 +1,130 @@
+<div class="mx-auto max-w-5xl space-y-8">
+  <div class="flex items-center justify-between border-b border-white/5 pb-5">
+    <div>
+      <h1 class="text-3xl font-bold text-white tracking-tight">System <span class="gradient-text">Health</span></h1>
+      <p class="text-sm text-slate-400 mt-2">
+        Latest global synchronization: <span class="font-semibold text-white bg-white/10 px-2 py-0.5 rounded-md ml-1"><%= @max_rate_date || "—" %></span>
+      </p>
+    </div>
+    <div class="h-12 w-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 shadow-[0_0_15px_rgba(79,70,229,0.15)]">
+       <svg class="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+       </svg>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Last historical date per currency -->
+    <div class="glass-card rounded-3xl p-6 sm:p-8 hover-scale transition-all duration-300">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="p-2 rounded-xl bg-purple-500/10 text-purple-400">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <h2 class="text-lg font-semibold text-white">Historical Data Status</h2>
+      </div>
+      
+      <div class="rounded-2xl border border-white/5 bg-[#0F131C] overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-white/5 text-slate-400 border-b border-white/5">
+            <tr>
+              <th class="text-left py-3 px-4 font-medium uppercase tracking-wider text-xs">Currency</th>
+              <th class="text-left py-3 px-4 font-medium uppercase tracking-wider text-xs">Last Rate Date</th>
+              <th class="text-center py-3 px-4 font-medium uppercase tracking-wider text-xs">Lag (days)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            <% (@last_rates || {}).sort.each do |iso3, dt| %>
+              <% lag = (@max_rate_date && dt) ? (@max_rate_date - dt).to_i : nil %>
+              <tr class="transition-colors hover:bg-white/[0.02]">
+                <td class="py-3 px-4 font-medium text-white flex items-center gap-2">
+                  <span class="text-lg"><%= flag_for(iso3) rescue "" %></span>
+                  <%= currency_label(iso3) %>
+                </td>
+                <td class="py-3 px-4 text-slate-300"><%= dt || "—" %></td>
+                <td class="py-3 px-4 text-center">
+                  <% if !lag %>
+                    <span class="text-slate-500">—</span>
+                  <% elsif lag > 1 %>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400 ring-1 ring-inset ring-rose-500/20">
+                      <%= lag %> days
+                    </span>
+                  <% else %>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 ring-1 ring-inset ring-emerald-500/20">
+                      Optimal
+                    </span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Last prediction per horizon -->
+    <div class="glass-card rounded-3xl p-6 sm:p-8 hover-scale transition-all duration-300">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="p-2 rounded-xl bg-indigo-500/10 text-indigo-400">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <h2 class="text-lg font-semibold text-white">Prediction Pipeline</h2>
+      </div>
+
+      <div class="rounded-2xl border border-white/5 bg-[#0F131C] overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-white/5 text-slate-400 border-b border-white/5">
+              <tr>
+                <th class="text-left py-3 px-4 font-medium uppercase tracking-wider text-xs whitespace-nowrap">Currency</th>
+                <% @horizons.each do |h| %>
+                  <th class="text-center py-3 px-4 font-medium uppercase tracking-wider text-xs">H<%= h %></th>
+                <% end %>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              <% by_currency = Hash.new { |h,k| h[k] = {} } %>
+              <% (@last_preds || {}).each do |(iso3, h), dt| by_currency[iso3][h] = dt end %>
+
+              <% by_currency.sort.each do |iso3, row| %>
+                <tr class="transition-colors hover:bg-white/[0.02]">
+                  <td class="py-3 px-4 font-medium text-white flex items-center gap-2 whitespace-nowrap">
+                    <span class="text-lg"><%= flag_for(iso3) rescue "" %></span>
+                    <%= currency_label(iso3) %>
+                  </td>
+                  <% @horizons.each do |h| %>
+                    <% dt = row[h] %>
+                    <td class="py-3 px-2 text-center">
+                      <% if dt %>
+                        <div class="group relative inline-block cursor-help">
+                          <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+                          <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-max bg-slate-800 text-white text-xs rounded py-1 px-2 shadow-xl z-10 whitespace-nowrap border border-white/10">
+                            <%= dt %>
+                          </div>
+                        </div>
+                      <% else %>
+                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-rose-500/50 shadow-[0_0_8px_rgba(244,63,94,0.3)]"></span>
+                      <% end %>
+                    </td>
+                  <% end %>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="mt-6 rounded-xl bg-indigo-500/5 border border-indigo-500/10 p-4 flex gap-3 text-sm text-slate-400">
+        <svg class="w-5 h-5 text-indigo-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p>
+          Red indicators mean predictions for that horizon haven’t been generated yet. Run <code class="px-1.5 py-0.5 rounded bg-black/30 font-mono text-xs text-indigo-300">make train_all</code> and <code class="px-1.5 py-0.5 rounded bg-black/30 font-mono text-xs text-indigo-300">make predict_all</code> for missing horizons.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

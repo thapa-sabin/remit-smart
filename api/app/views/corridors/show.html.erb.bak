@@ -1,0 +1,195 @@
+<%# Header row: corridor & quick context %>
+<div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+  <div>
+    <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">
+      <%= flag_for(@from) %> <%= @from %> → <%= flag_for(@to) %> <%= @to %>
+    </h1>
+    <p class="text-sm text-slate-600">
+      Target: <span class="font-medium"><%= @target.upcase %></span>
+      <% if @to_date %>
+        · Latest NRB date: <%= @to_date %>
+      <% end %>
+    </p>
+  </div>
+
+  <%# Corridor Picker %>
+  <div class="bg-white/80 backdrop-blur rounded-lg border px-3 py-2">
+    <%= form_with url: corridor_path, method: :get, local: true, html: { class: "grid grid-cols-3 gap-2" } do %>
+      <div class="flex items-center gap-2">
+        <label class="text-xs text-slate-500">From</label>
+        <select name="from" class="rounded border-slate-300 text-sm">
+          <% @currency_options.each do |iso| %>
+            <option value="<%= iso %>" <%= 'selected' if iso == @from %>><%= "#{flag_for(iso)} #{iso}" %></option>
+          <% end %>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <label class="text-xs text-slate-500">To</label>
+        <select name="to" class="rounded border-slate-300 text-sm">
+          <option value="NPR" <%= 'selected' if @to == 'NPR' %>>🇳🇵 NPR</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <label class="text-xs text-slate-500">Target</label>
+        <select name="target" class="rounded border-slate-300 text-sm">
+          <option value="mid"  <%= 'selected' if @target=='mid' %>>Mid</option>
+          <option value="buy"  <%= 'selected' if @target=='buy' %>>Buy</option>
+          <option value="sell" <%= 'selected' if @target=='sell' %>>Sell</option>
+        </select>
+      </div>
+
+      <div class="col-span-3 text-right">
+        <button class="inline-flex items-center rounded bg-indigo-600 text-white text-sm px-3 py-1.5 hover:bg-indigo-700">
+          Update
+        </button>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Popular corridors -->
+<div class="mt-4">
+  <div class="text-xs font-medium text-slate-500 mb-2">Popular corridors</div>
+  <div class="flex flex-wrap gap-2">
+    <% corridor_presets.each do |p| %>
+      <% is_active = preset_active?(p[:from], p[:to]) %>
+      <%= link_to corridor_preset_label(p[:from], p[:to]),
+                  corridor_path(from: p[:from], to: p[:to], target: @target),
+                  class: corridor_chip_classes(active: is_active) %>
+    <% end %>
+  </div>
+</div>
+
+<%# --- Send Now or Wait card --- %>
+<div class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+  <div class="lg:col-span-2 rounded-xl border bg-white p-4">
+    <h2 class="text-lg font-semibold mb-3">Send Now or Wait?</h2>
+
+    <% if @today_rate.present? %>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="rounded-lg border bg-slate-50 p-3">
+          <div class="text-xs text-slate-500">Today (<%= @to_date %>)</div>
+          <div class="mt-1 text-3xl font-bold tracking-tight">
+            <%= fmt_rate(@today_rate) %>
+          </div>
+          <div class="text-xs text-slate-500"><%= @from %> → <%= @to %> (<%= @target %>)</div>
+        </div>
+
+        <div class="sm:col-span-2 rounded-lg border p-3">
+          <div class="text-xs text-slate-500 mb-2">Next 72 hours</div>
+          <% if @predictions_72h.any? %>
+            <table class="w-full text-sm">
+              <thead class="text-slate-500">
+                <tr>
+                  <th class="text-left py-1">Day</th>
+                  <th class="text-left py-1">Predicted</th>
+                  <th class="text-left py-1">Δ vs Today</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @predictions_72h.each do |p| %>
+                  <% delta = p.yhat.to_f - @today_rate.to_f %>
+                  <% pct   = @today_rate.to_f.zero? ? 0 : (delta / @today_rate.to_f) * 100.0 %>
+                  <tr class="border-b last:border-none <%= 'bg-green-50/60' if @best_pred && p.predicted_for == @best_pred.predicted_for %>">
+                    <td class="py-1"><%= p.predicted_for %></td>
+                    <td class="py-1 font-medium"><%= fmt_rate(p.yhat) %></td>
+                    <td class="py-1">
+                      <span class="<%= delta_badge_classes(delta) %>">
+                        <%= delta >= 0 ? '▲' : (delta == 0 ? '■' : '▼') %>
+                        <span class="ml-1"><%= fmt_rate(delta, precision: 4) %> (<%= fmt_pct(pct) %>)</span>
+                      </span>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+
+            <% if @best_pred %>
+              <div class="mt-3 text-sm">
+                <span class="font-semibold">Recommendation:</span>
+                <% if @recommendation == "WAIT" %>
+                  <span class="inline-flex items-center rounded bg-green-600 text-white px-2 py-0.5 text-xs font-medium">
+                    WAIT <%= @wait_hours %> HOURS
+                  </span>
+                  <span class="ml-2 text-slate-600">Potential improvement <%= fmt_pct(@best_delta_pct) %></span>
+                <% else %>
+                  <span class="inline-flex items-center rounded bg-slate-800 text-white px-2 py-0.5 text-xs font-medium">
+                    SEND NOW
+                  </span>
+                <% end %>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="text-sm text-slate-500">No 72‑hour predictions yet. Run training/prediction for horizons 1–3 and refresh.</div>
+          <% end %>
+        </div>
+      </div>
+    <% else %>
+      <div class="text-sm text-slate-500">No “today” rate found. Ingest data and refresh.</div>
+    <% end %>
+  </div>
+
+  <%# --- Impact Calculator --- %>
+  <div class="rounded-xl border bg-white p-4" data-controller="impact">
+    <h2 class="text-lg font-semibold mb-3">Impact Calculator</h2>
+
+    <div class="grid grid-cols-1 gap-3">
+      <div>
+        <label class="block text-sm text-slate-600">
+          Amount (in <%= @from %>)
+        </label>
+        input->impact#recalc change->impact#recalc
+
+        <div class="mt-2 flex gap-2">
+          <% [100, 300, 500, 1000].each do |chip| %>
+            click->impact#setAmount"><%= chip %></button>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label class="block text-xs text-slate-500">Today’s Rate</label>
+          <input type="text" readonly
+                 value="<%= (@today_rate || 0).to_f %>"  <!-- RAW numeric -->
+                 class="mt-1 w-full rounded border-slate-200 bg-slate-50"
+                 data-impact-target="todayRate">
+        </div>
+
+        <div>
+          <label class="block text-xs text-slate-500">Best 72h Rate</label>
+          <input type="text" readonly
+                 value="<%= (@best_pred&.yhat || 0).to_f %>"  <!-- RAW numeric -->
+                 class="mt-1 w-full rounded border-slate-200 bg-slate-50"
+                 data-impact-target="bestRate">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="rounded-lg border bg-slate-50 p-3">
+          <div class="text-xs text-slate-500">If you send today</div>
+          <div class="text-xl font-semibold" data-impact-target="todayAmt">—</div>
+        </div>
+        <div class="rounded-lg border bg-slate-50 p-3">
+          <div class="text-xs text-slate-500">If you wait (best in 72h)</div>
+          <div class="text-xl font-semibold" data-impact-target="bestAmt">—</div>
+        </div>
+        <div class="rounded-lg border bg-slate-50 p-3">
+          <div class="text-xs text-slate-500">Difference</div>
+          <div class="text-xl font-semibold" data-impact-target="diffAmt">—</div>
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-500">
+        Assumes rate is <%= @to %> per 1 <%= @from %>. Adjust corridor math for non‑NPR destinations later.
+      </p>
+    </div>
+  </div>
+</div>
+
+<%# Risk banner %>
+<div class="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-800 text-sm">
+  Forecasts are probabilistic. Unexpected events may impact exchange rates.
+</div>

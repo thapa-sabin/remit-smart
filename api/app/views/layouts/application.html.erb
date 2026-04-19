@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Remit-Smart" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Remit Smart">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <%= yield :head %>
+
+    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
+    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%# Includes all stylesheet files in app/assets/stylesheets %>
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+
+    <style>
+      body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      }
+      .gradient-text {
+        background: linear-gradient(135deg, #a855f7, #6366f1);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .hover-scale {
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .hover-scale:hover {
+        transform: scale(1.02);
+      }
+    </style>
+  </head>
+
+  <body class="min-h-screen bg-[#0A0C10] text-slate-300 antialiased selection:bg-indigo-500/30 overflow-x-hidden relative">
+    <div class="fixed inset-0 z-[-1]">
+      <div class="absolute top-0 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-[120px] mix-blend-screen pointer-events-none"></div>
+      <div class="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[150px] mix-blend-screen pointer-events-none"></div>
+    </div>
+
+    <header class="sticky top-0 z-50 border-b border-white/5 bg-[#0A0C10]/70 backdrop-blur-xl">
+      <div class="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between">
+        <a href="/" class="flex items-center gap-2 group">
+          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/20 group-hover:shadow-indigo-500/40 transition-shadow">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <span class="text-xl font-bold tracking-tight text-white">
+            Remit-<span class="gradient-text">Smart</span>
+          </span>
+        </a>
+        <nav class="flex items-center gap-6 text-sm font-medium">
+          <a href="/currencies" class="text-slate-400 hover:text-white transition-colors">Currencies</a>
+          <a href="/health" class="text-slate-400 hover:text-white transition-colors">Health</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-6xl px-4 py-8 sm:py-12 relative">
+      <%= yield %>
+    </main>
+  </body>
+</html>

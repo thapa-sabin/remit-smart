@@ -1,0 +1,360 @@
+<%# ===== Header row: corridor & quick context ===== %>
+<div class="flex flex-col xl:flex-row xl:items-end justify-between gap-6 pb-6 border-b border-white/5">
+  <div class="min-w-0">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-4">
+      <span class="w-2 h-2 rounded-full <%= @today_rate.present? ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-rose-500' %>"></span>
+      <span class="text-xs font-medium text-slate-300">Live Forecast Active</span>
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-white break-words flex items-center gap-3">
+      <div class="flex items-center">
+        <span class="text-4xl"><%= flag_for(@from) %></span>
+        <span class="ml-2"><%= @from %></span>
+      </div>
+      <svg class="w-6 h-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+      </svg>
+      <div class="flex items-center">
+        <span class="text-4xl"><%= flag_for(@to) %></span>
+        <span class="ml-2"><%= @to %></span>
+      </div>
+    </h1>
+    <p class="text-sm text-slate-400 mt-2 flex items-center gap-2">
+      Targeting <span class="font-semibold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-md"><%= @target.upcase %></span> rate
+      <% if @to_date %>
+        <span class="text-slate-600">•</span>
+        Data updated: <span class="text-slate-300"><%= @to_date %></span>
+      <% end %>
+    </p>
+  </div>
+
+  <%# ===== Corridor Picker ===== %>
+  <div class="glass-card rounded-2xl p-4 w-full xl:w-auto xl:min-w-[600px]">
+    <%= form_with url: corridor_path, method: :get, local: true, html: { class: "grid grid-cols-1 sm:grid-cols-4 gap-3 items-end" } do %>
+      <div class="flex flex-col gap-1.5 min-w-0">
+        <label class="text-xs font-medium text-slate-400 uppercase tracking-wider">From</label>
+        <div class="relative">
+          <select name="from" class="w-full appearance-none bg-[#1A1D24] border border-white/10 text-white text-sm rounded-xl pl-3 pr-8 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+            <% @currency_options.each do |iso| %>
+              <option value="<%= iso %>" <%= 'selected' if iso == @from %>><%= "#{flag_for(iso)} #{iso}" %></option>
+            <% end %>
+          </select>
+          <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-slate-400">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1.5 min-w-0">
+        <label class="text-xs font-medium text-slate-400 uppercase tracking-wider">To</label>
+        <div class="relative">
+          <select name="to" class="w-full appearance-none bg-[#1A1D24] border border-white/10 text-white text-sm rounded-xl pl-3 pr-8 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+            <option value="NPR" <%= 'selected' if @to == 'NPR' %>>🇳🇵 NPR</option>
+          </select>
+          <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-slate-400">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1.5 min-w-0">
+        <label class="text-xs font-medium text-slate-400 uppercase tracking-wider">Target</label>
+        <div class="relative">
+          <select name="target" class="w-full appearance-none bg-[#1A1D24] border border-white/10 text-white text-sm rounded-xl pl-3 pr-8 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+            <option value="mid"  <%= 'selected' if @target=='mid' %>>Mid</option>
+            <option value="buy"  <%= 'selected' if @target=='buy' %>>Buy</option>
+            <option value="sell" <%= 'selected' if @target=='sell' %>>Sell</option>
+          </select>
+          <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-slate-400">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-2 sm:mt-0">
+        <button class="w-full inline-flex justify-center items-center rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2.5 transition-all shadow-lg shadow-indigo-500/25">
+          Update
+        </button>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<%# ===== Popular corridors ===== %>
+<div class="mt-6 flex flex-col sm:flex-row sm:items-center gap-3">
+  <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider shrink-0">Popular Routes:</div>
+  <div class="flex flex-wrap gap-2">
+    <% corridor_presets.each do |p| %>
+      <% is_active = preset_active?(p[:from], p[:to]) %>
+      <%= link_to corridor_preset_label(p[:from], p[:to]),
+                  corridor_path(from: p[:from], to: p[:to], target: @target),
+                  class: "px-3 py-1.5 rounded-lg text-sm font-medium transition-all #{is_active ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/5 hover:border-white/10'}" %>
+    <% end %>
+  </div>
+</div>
+
+<%# ===== Main grid ===== %>
+<div class="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  <%# --- Send Now or Wait card --- %>
+  <div class="lg:col-span-2 glass-card rounded-3xl p-6 sm:p-8 hover-scale transition-transform duration-300 border border-white/5 relative overflow-hidden">
+    <!-- Decorative background element -->
+    <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-gradient-to-br from-indigo-500/10 to-purple-500/10 blur-3xl pointer-events-none"></div>
+    
+    <div class="flex items-center gap-3 mb-6 relative z-10">
+      <div class="p-2.5 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-400 border border-white/5 shadow-inner">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <h2 class="text-xl font-bold text-white tracking-tight">Smart Forecast: <span class="gradient-text">Send or Wait?</span></h2>
+    </div>
+
+    <% if @today_rate.present? %>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+        <!-- Today's Rate -->
+        <div class="rounded-2xl bg-[#0F131C] border border-white/5 p-5 flex flex-col justify-center relative overflow-hidden shadow-inner">
+          <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+          <div class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">Today's Rate</div>
+          <div class="text-sm text-slate-500 mb-4"><%= @to_date %></div>
+          
+          <div class="mt-auto">
+            <div class="text-4xl font-black text-white tracking-tight mb-2">
+              <%= fmt_rate(@today_rate) %>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="inline-flex px-2 py-0.5 rounded-md bg-white/5 text-xs font-medium text-slate-300"><%= @from %></span>
+              <span class="text-slate-500">→</span>
+              <span class="inline-flex px-2 py-0.5 rounded-md bg-white/5 text-xs font-medium text-slate-300"><%= @to %></span>
+              <span class="inline-flex px-2 py-0.5 rounded-md bg-indigo-500/10 text-xs font-medium text-indigo-400 ml-auto"><%= @target %></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 72h Forecast -->
+        <div class="md:col-span-2 rounded-2xl bg-[#0F131C] border border-white/5 p-5 flex flex-col shadow-inner">
+          <div class="flex items-center justify-between mb-4">
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-widest">72-Hour Outlook</div>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-medium border border-blue-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+              AI Model Active
+            </span>
+          </div>
+
+          <% if @predictions_72h.any? %>
+            <div class="overflow-x-auto flex-grow -mx-2 px-2">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="text-slate-500 border-b border-white/5">
+                    <th class="text-left py-2 font-medium">Date Target</th>
+                    <th class="text-right py-2 font-medium">Est. Rate</th>
+                    <th class="text-right py-2 font-medium">Expected Δ</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                  <% @predictions_72h.each do |p| %>
+                    <% delta = p.yhat.to_f - @today_rate.to_f %>
+                    <% pct   = @today_rate.to_f.zero? ? 0 : (delta / @today_rate.to_f) * 100.0 %>
+                    <% is_best = @best_pred && p.predicted_for == @best_pred.predicted_for %>
+                    
+                    <tr class="<%= is_best ? 'bg-emerald-500/[0.03]' : 'hover:bg-white/[0.02]' %> transition-colors">
+                      <td class="py-3">
+                        <div class="flex items-center gap-2">
+                          <span class="text-slate-300 font-medium"><%= p.predicted_for %></span>
+                          <% if is_best %>
+                            <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400" title="Best time to send">
+                              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                            </span>
+                          <% end %>
+                        </div>
+                      </td>
+                      <td class="py-3 text-right">
+                        <span class="font-bold <%= is_best ? 'text-emerald-400' : 'text-white' %>"><%= fmt_rate(p.yhat) %></span>
+                      </td>
+                      <td class="py-3 text-right">
+                        <% if delta > 0 %>
+                          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-emerald-400 bg-emerald-500/10 font-medium text-xs border border-emerald-500/10">
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+                            <%= fmt_rate(delta, precision: 4) %> (<%= fmt_pct(pct) %>)
+                          </span>
+                        <% elsif delta < 0 %>
+                          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-rose-400 bg-rose-500/10 font-medium text-xs border border-rose-500/10">
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+                            <%= fmt_rate(delta, precision: 4) %> (<%= fmt_pct(pct) %>)
+                          </span>
+                        <% else %>
+                          <span class="text-slate-500 text-xs">—</span>
+                        <% end %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+
+            <% if @best_pred %>
+              <div class="mt-4 pt-4 border-t border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/[0.02] -mx-5 -mb-5 p-5 rounded-b-2xl">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">AI Recommendation</span>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                  <% if @recommendation == "WAIT" %>
+                    <span class="text-sm font-medium text-slate-300">Potential gain: <span class="text-emerald-400"><%= fmt_pct(@best_delta_pct) %></span></span>
+                    <span class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1.5 text-sm font-bold shadow-[0_0_15px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/30">
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      WAIT <%= @wait_hours %>h
+                    </span>
+                  <% else %>
+                    <span class="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-3 py-1.5 text-sm font-bold shadow-[0_0_15px_rgba(99,102,241,0.25)] ring-1 ring-indigo-400/30">
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                      SEND NOW
+                    </span>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+            
+          <% else %>
+            <div class="flex-grow flex flex-col items-center justify-center text-center p-6 bg-white/[0.02] rounded-xl border border-white/5">
+              <svg class="w-10 h-10 text-slate-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+              <p class="text-sm font-medium text-slate-300">No predictions available</p>
+              <p class="text-xs text-slate-500 mt-1 max-w-[200px]">Data needs to be ingested or predictions trained for this corridor.</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% else %>
+      <div class="flex flex-col items-center justify-center text-center p-12 bg-[#0F131C] rounded-2xl border border-white/5 h-64">
+        <svg class="w-12 h-12 text-slate-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <p class="text-white font-medium mb-1">Current rate unavailable</p>
+        <p class="text-sm text-slate-500 max-w-sm">We don't have today's rate for this corridor yet. Try a different currency or check back later.</p>
+      </div>
+    <% end %>
+  </div>
+
+  <%# --- Impact Calculator --- %>
+  <div class="glass-card rounded-3xl p-6 sm:p-8 hover-scale transition-transform duration-300 border border-white/5 relative overflow-hidden flex flex-col">
+    <!-- Decorative background element -->
+    <div class="absolute bottom-0 right-0 -mr-16 -mb-16 w-64 h-64 rounded-full bg-gradient-to-br from-emerald-500/10 to-teal-500/10 blur-3xl pointer-events-none"></div>
+
+    <div class="flex items-center gap-3 mb-6 relative z-10">
+      <div class="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 text-emerald-400 border border-white/5 shadow-inner">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+      </div>
+      <h2 class="text-xl font-bold text-white tracking-tight">Impact <span class="text-emerald-400">Calculator</span></h2>
+    </div>
+
+    <div class="flex-grow flex flex-col relative z-10">
+      <%# Amount input %>
+      <div class="mb-6">
+        <%= form_with url: corridor_path, method: :get, local: true, class: "flex flex-col gap-3" do %>
+          <div class="flex justify-between items-end">
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Send Amount (<%= @from %>)</label>
+          </div>
+
+          <div class="relative flex items-center group">
+            <div class="absolute left-4 text-slate-500 font-medium select-none text-xl"><%= flag_for(@from) %></div>
+            <input type="number" name="amount" step="1" min="0" value="<%= @amount %>"
+                   class="w-full bg-[#1A1D24] border border-white/10 text-white text-lg font-bold rounded-xl pl-12 pr-28 py-3.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all shadow-inner" />
+            
+            <div class="absolute right-2">
+              <button class="px-4 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-sm font-medium transition-colors border border-emerald-500/20">
+                Calc
+              </button>
+            </div>
+            
+            <%# Keep corridor params when submitting %>
+            <input type="hidden" name="from"   value="<%= @from %>">
+            <input type="hidden" name="to"     value="<%= @to %>">
+            <input type="hidden" name="target" value="<%= @target %>">
+          </div>
+
+          <%# Chips as links %>
+          <div class="flex flex-wrap gap-2 mt-1">
+            <span class="text-xs text-slate-500 self-center mr-1">Quick add:</span>
+            <% [100, 300, 500, 1000].each do |chip| %>
+              <%= link_to "+#{chip}",
+                          corridor_path(from: @from, to: @to, target: @target, amount: chip),
+                          class: "px-2.5 py-1 text-xs font-medium rounded-md bg-white/5 hover:bg-white/10 text-slate-300 border border-white/5 hover:border-white/10 transition-colors" %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+
+      <%# Results UI %>
+      <div class="bg-[#0F131C] rounded-2xl border border-white/5 p-4 flex-grow flex flex-col shadow-inner">
+        <div class="space-y-4 flex-grow">
+          <!-- Send Today -->
+          <div class="flex justify-between items-center group">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 border border-white/5">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              </div>
+              <span class="text-sm font-medium text-slate-300">If you send today</span>
+            </div>
+            <div class="text-lg font-bold text-white tracking-tight">
+              <%= @today_amt ? number_with_precision(@today_amt, precision: 2) : "—" %> <span class="text-xs text-slate-500 font-normal ml-1"><%= @to %></span>
+            </div>
+          </div>
+          
+          <div class="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+
+          <!-- Send Optimum -->
+          <div class="flex justify-between items-center group">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 border border-indigo-500/20">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              </div>
+              <span class="text-sm font-medium text-white group-hover:text-indigo-300 transition-colors">If you wait (best forecast)</span>
+            </div>
+            <div class="text-lg font-bold text-indigo-400 tracking-tight">
+              <%= @best_amt ? number_with_precision(@best_amt, precision: 2) : "—" %> <span class="text-xs text-indigo-500/50 font-normal ml-1"><%= @to %></span>
+            </div>
+          </div>
+          
+          <div class="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+
+          <!-- Difference -->
+          <div class="flex justify-between items-center bg-white/[0.02] -mx-4 px-4 py-3 rounded-xl mt-auto border border-white/5">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium text-slate-300">Net Difference</span>
+            </div>
+            <div class="flex flex-col items-end">
+              <div class="text-xl font-black <%= (@diff_amt && @diff_amt > 0) ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.3)]' : ((@diff_amt && @diff_amt < 0) ? 'text-rose-400' : 'text-slate-400') %> tracking-tight">
+                <% if @diff_amt %>
+                  <%= (@diff_amt > 0 ? "+" : "") + number_with_precision(@diff_amt, precision: 2) %>
+                <% else %>
+                  —
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <p class="text-[10px] text-slate-500 text-center mt-4 uppercase tracking-widest px-4">
+        Assumes rate is 1 <%= @from %> = base <%= @to %>. Adjust logic for cross-currency routes.
+      </p>
+    </div>
+  </div>
+</div>
+
+<%# ===== Risk banner ===== %>
+<div class="mt-8 relative overflow-hidden rounded-2xl border border-amber-500/20 bg-[#1A1D24] shadow-lg p-5 flex items-start gap-4">
+  <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-amber-400 to-orange-500"></div>
+  <div class="flex-shrink-0 mt-0.5">
+    <div class="p-2.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+    </div>
+  </div>
+  <div>
+    <h3 class="text-sm font-bold text-amber-500 uppercase tracking-wider mb-1">Market Volatility Warning</h3>
+    <p class="text-sm text-slate-400 leading-relaxed max-w-4xl">
+      Forecasts are generated by AI models and represent probabilistic estimates. Real-world exchange rates are subject to sudden macroeconomic changes, geopolitical events, and liquidity constraints. This information does not constitute financial advice.
+    </p>
+  </div>
+</div>

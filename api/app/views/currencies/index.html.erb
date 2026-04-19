@@ -1,0 +1,143 @@
+<div class="mx-auto max-w-6xl space-y-8">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-6">
+    <div>
+      <h1 class="text-3xl font-bold text-white tracking-tight">Active <span class="gradient-text">Currencies</span></h1>
+      <p class="text-sm text-slate-400 mt-1">Browse and analyze all supported exchange rates.</p>
+    </div>
+
+    <%= form_with url: currencies_path, method: :get, local: true, class: "flex items-center gap-2 relative" do %>
+      <div class="relative w-full sm:w-64">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <input type="text" name="q" value="<%= params[:q].to_s %>"
+               placeholder="Search (USD, INR, …)"
+               class="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white/10 transition-all placeholder:text-slate-500" />
+      </div>
+      <%# keep current per when searching %>
+      <input type="hidden" name="per" value="<%= @per %>">
+      <button class="shrink-0 inline-flex items-center justify-center rounded-xl bg-indigo-600 text-white text-sm font-medium px-4 py-2.5 hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/20">
+        Search
+      </button>
+    <% end %>
+  </div>
+
+  <div class="glass-card rounded-3xl overflow-hidden border border-white/5">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-black/20 text-slate-400 border-b border-white/5 backdrop-blur-sm">
+          <tr>
+            <th class="text-left py-4 px-6 font-medium uppercase tracking-wider text-xs">Currency</th>
+            <th class="text-left py-4 px-6 font-medium uppercase tracking-wider text-xs">Name</th>
+            <th class="text-left py-4 px-6 font-medium uppercase tracking-wider text-xs">Unit</th>
+            <th class="text-left py-4 px-6 font-medium uppercase tracking-wider text-xs">Data Freshness</th>
+            <th class="text-left py-4 px-6 font-medium uppercase tracking-wider text-xs">Latest Forecast</th>
+            <th class="text-right py-4 px-6 font-medium uppercase tracking-wider text-xs">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5 text-slate-300">
+          <% if @rows.blank? %>
+            <tr>
+              <td colspan="6" class="py-12 px-6 text-center">
+                <div class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/5 mb-4">
+                  <svg class="h-6 w-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <h3 class="text-lg font-medium text-white mb-1">No results found</h3>
+                <p class="text-slate-500">We couldn't find any currencies matching your search.</p>
+              </td>
+            </tr>
+          <% else %>
+            <% @rows.each do |r| %>
+              <tr class="transition-colors hover:bg-white/[0.04] group">
+                <td class="py-4 px-6">
+                  <div class="flex items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-[#1A1D24] border border-white/10 text-lg shadow-inner">
+                      <%= flag_for(r[:iso3]) rescue "" %>
+                    </div>
+                    <span class="font-bold text-white tracking-wide"><%= r[:iso3] %></span>
+                  </div>
+                </td>
+                <td class="py-4 px-6 font-medium"><%= r[:name] %></td>
+                <td class="py-4 px-6"><span class="inline-flex px-2 py-1 rounded-md bg-white/5 text-xs font-mono"><%= r[:unit] %></span></td>
+                
+                <td class="py-4 px-6">
+                  <div class="flex items-center gap-2">
+                    <% if r[:last_rate_date] %>
+                      <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+                      <span class="text-white"><%= r[:last_rate_date] %></span>
+                    <% else %>
+                      <span class="w-2 h-2 rounded-full bg-rose-500/50"></span>
+                      <span class="text-slate-500 italic">No data</span>
+                    <% end %>
+                  </div>
+                </td>
+                
+                <td class="py-4 px-6">
+                  <div class="flex items-center gap-2">
+                    <% if r[:last_pred_date] %>
+                      <span class="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]"></span>
+                      <span class="text-white"><%= r[:last_pred_date] %></span>
+                    <% else %>
+                      <span class="w-2 h-2 rounded-full bg-rose-500/50"></span>
+                      <span class="text-slate-500 italic">Pending</span>
+                    <% end %>
+                  </div>
+                </td>
+                
+                <td class="py-4 px-6 text-right">
+                  <%= link_to corridor_path(from: r[:iso3], to: "NPR", target: "mid"),
+                              class: "inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-medium transition-colors group-hover:bg-indigo-500/10 px-3 py-1.5 rounded-lg" do %>
+                    Analyze
+                    <svg class="h-4 w-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <%# Pagination footer %>
+  <% if @total > @per %>
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 px-2 text-sm">
+      <div class="text-slate-500">
+        Showing
+        <strong class="text-white font-medium"><%= ((@page - 1) * @per) + 1 %>–<%= [@page * @per, @total].min %></strong>
+        of <strong class="text-white font-medium"><%= @total %></strong>
+      </div>
+      
+      <div class="flex items-center gap-1 glass-card p-1 rounded-xl">
+        <% prev_page = @page - 1 %>
+        <% next_page = @page + 1 %>
+        
+        <% if @page > 1 %>
+          <%= link_to "Previous",
+                      url_for(params.permit!.merge(page: prev_page, per: @per)),
+                      class: "px-4 py-2 rounded-lg hover:bg-white/10 text-slate-300 transition-colors" %>
+        <% else %>
+          <span class="px-4 py-2 rounded-lg text-slate-600 cursor-not-allowed">Previous</span>
+        <% end %>
+
+        <div class="px-4 py-2 text-white font-medium">
+          <%= @page %> <span class="text-slate-500 mx-1">/</span> <%= (@total.to_f / @per).ceil %>
+        </div>
+
+        <% if (@page * @per) < @total %>
+          <%= link_to "Next",
+                      url_for(params.permit!.merge(page: next_page, per: @per)),
+                      class: "px-4 py-2 rounded-lg hover:bg-white/10 text-slate-300 transition-colors" %>
+        <% else %>
+          <span class="px-4 py-2 rounded-lg text-slate-600 cursor-not-allowed">Next</span>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>
